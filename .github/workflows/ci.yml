@@ -1,0 +1,31 @@
+# This workflow installs Deno and runs formatting checks, linting, and tests.
+# For more information see: https://github.com/denoland/setup-deno
+
+name: "CI - Code Quality & Testing"
+
+on:
+  # Create a reusable workflow
+  # https://docs.github.com/en/actions/using-workflows/reusing-workflows
+  workflow_call:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run format check
+        run: deno task format
+
+      - name: Run lint check
+        run: deno task lint
+
+      - name: Run tests
+        run: deno task test

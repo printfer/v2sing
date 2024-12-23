@@ -1,0 +1,35 @@
+# This workflow handles the deployment and release process.
+# For more information see: https://github.com/denoland/setup-deno
+
+name: "Deploy - Release to Production"
+
+on:
+  # Create a reusable workflow
+  # https://docs.github.com/en/actions/using-workflows/reusing-workflows
+  workflow_call:
+
+#permissions:
+#  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Build project
+        run: deno task build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

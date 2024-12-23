@@ -1,0 +1,25 @@
+# This is the primary workflow that orchestrates the CI and deployment workflows.
+
+name: "Project Default Workflow"
+
+on:
+  push:
+    branches: ["master"]
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches: ["master"]
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    name: "CI - Code Quality & Testing"
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: "Deploy - Release to Production"
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: ci
+    uses: ./.github/workflows/deploy.yml

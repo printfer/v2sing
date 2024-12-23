@@ -1,0 +1,16 @@
+{
+  "tasks": {
+    "serve": "deno serve --watch --allow-net main.ts",
+    "build": "deno run -A build.ts",
+    "preview": {
+      "command": "deno serve --watch --allow-net dist/worker.js",
+      "dependencies": ["build"]
+    },
+    "format": "deno fmt src main*",
+    "lint": "deno lint",
+    "test": "deno test -A"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}
