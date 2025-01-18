@@ -14,12 +14,12 @@ export default {
       const url = new URL(request.url);
       const queryParams = Object.fromEntries(url.searchParams.entries());
 
-      // Check if the path is `/` (root) and provide a help message
+      // Provide a help message for root path with no query params
       if (url.pathname === "/" && Object.keys(queryParams).length === 0) {
         return createJsonResponse(
           {
             message:
-              "Welcome to v2sing! Use the `sub` query parameter to provide a subscription URL. For more information, please visit: https://github.com/printfer/v2sing",
+              "Welcome to v2sing! Use the 'sub' query parameter to provide a subscription URL. For more information, visit: https://github.com/printfer/v2sing",
           },
           200,
         );
@@ -34,21 +34,33 @@ export default {
         );
       }
 
-      // Fetch the subscription content
+      // Fetch and parse subscription content
       const subscriptionContent = await fetchSubscriptionContent(
         subscriptionUrl,
       );
-
-      // Parse the subscription content
       const singBoxSubscription = parseSubscription(subscriptionContent);
-      const singBoxConfig = getConfig(singBoxSubscription);
 
+      // If `config` query parameter is provided, fetch the template
+      const configTemplateUrl = queryParams.config;
+      let singBoxConfig;
+      if (configTemplateUrl) {
+        try {
+          const configTemplate = await fetchConfigTemplate(configTemplateUrl);
+          singBoxConfig = getConfig(singBoxSubscription, configTemplate);
+        } catch (error) {
+          return createJsonResponse(
+            { error: "Error fetching config template", details: error.message },
+            500,
+          );
+        }
+      } else {
+        singBoxConfig = getConfig(singBoxSubscription);
+      }
+
+      // Logs query parameters for debugging.
       console.log(JSON.stringify({ options: queryParams }, null, 2));
-
-      // Return the generated configuration
       return createJsonResponse(singBoxConfig);
     } catch (error) {
-      // Handle errors gracefully
       return createJsonResponse(
         { error: "Failed to process subscription", details: error.message },
         500,
@@ -57,17 +69,40 @@ export default {
   },
 };
 
+// Function to validate a URL
+function validateUrl(url: string): void {
+  try {
+    new URL(url); // Throws an error if URL is invalid
+  } catch {
+    throw new Error(`Invalid URL provided: ${url}`);
+  }
+}
+
+/**
+ * Fetches a configuration template from the provided URL.
+ * @param url - The URL to fetch the configuration template from.
+ */
+async function fetchConfigTemplate(url: string): Promise<unknown> {
+  validateUrl(url); // Ensure the config template URL is valid
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch config template from ${url}: ${response.statusText}`,
+    );
+  }
+  return response.json();
+}
+
 /**
  * Fetches and returns the subscription content, handling BOM removal.
  * @param url - The subscription URL to fetch content from.
  */
 async function fetchSubscriptionContent(url: string): Promise<string> {
+  validateUrl(url); // Ensure the subscription URL is valid
   const response = await fetch(url);
-
   if (!response.ok) {
     throw new Error(`Failed to fetch subscription URL: ${response.statusText}`);
   }
-
   // Safely remove BOM if present
   return (await response.text()).replace(/^\ufeff/, "");
 }

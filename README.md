@@ -20,7 +20,22 @@ You can self-host this project or deploy it to Cloudflare Workers. To deploy the
 Use the `v2sing` tool by providing specific parameters. Below are the currently available parameters:
 
 - `sub` (required) - The subscription URL to convert.
-  - Example: `?sub=https://example.com/subscription`
+  - Example: `?sub=https://example.com/sub`
+- `config` (optional) - The configuration template URL for advanced output customization. See [Creating a Configuration Template](#creating-a-configuration-template) section for more details.
+  - Example: `?sub=https://example.com/sub&config=https://example.com/config_template.json`
+
+### Creating a Configuration Template
+
+You can create a configuration template just like a regular sing-box configuration file, but with placeholders to dynamically insert information from the subscription.
+
+To get started, refer to the sample template provided [here](./public/config_template.json), which you can customize to suit your requirements.
+
+Placeholders are written in the format `{{ placeholder_name }}` and are replaced with actual values at runtime.
+
+Here are the currently available placeholders:
+
+- `{{ outbounds_tags }}` - This placeholder is replaced with an array of outbound tags.
+- `{{ outbounds }}` - This placeholder is replaced with a list of outbound configurations.
 
 ## Development
 
