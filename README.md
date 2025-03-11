@@ -28,7 +28,7 @@ Use the `v2sing` tool by providing specific parameters. Below are the currently 
 
 You can create a configuration template just like a regular sing-box configuration file, but with placeholders to dynamically insert information from the subscription.
 
-To get started, refer to the sample template provided [here](./public/config_template.json), which you can customize to suit your requirements.
+To get started, refer to the sample template provided [here](./src/config/template.json), which you can customize to suit your requirements.
 
 Placeholders are written in the format `{{ placeholder_name }}` and are replaced with actual values at runtime.
 

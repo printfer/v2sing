@@ -11,6 +11,9 @@ await esbuild.build({
   minify: true,
   treeShaking: true,
   drop: ["console", "debugger"],
+  loader: {
+    ".json": "json",
+  },
 });
 
 esbuild.stop();

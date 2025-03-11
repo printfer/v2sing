@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Updated the configuration system to use `template.json` as the sole method for generating configuration files.
+- Modified the build process to include imported JSON objects directly in the final build file instead of using a separate JSON file.
+- Updated `CHANGELOG.md` and `README.md` to reflect these changes.
+
+### Removed
+
+- Deprecated the default configuration file generation method.
+
 ## [0.0.2] - 2025-01-15
 
 Add support for configuration templates via URL for generating customized config files

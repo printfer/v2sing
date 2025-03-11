@@ -1,28 +1,15 @@
-import { getDnsConfig } from "./dns.ts";
-import { getInboundsConfig } from "./inbounds.ts";
-import { getOutboundsConfig } from "./outbounds.ts";
-import { getRouteConfig } from "./route.ts";
+import configTemplateDefault from "./template.json" with { type: "json" };
 
-export function getConfig(subscribedOutbounds, configTemplate?) {
-  if (configTemplate) {
-    return useConfigTemplate(configTemplate, subscribedOutbounds);
-  }
-
-  return {
-    dns: getDnsConfig(),
-    inbounds: getInboundsConfig(),
-    outbounds: getOutboundsConfig(subscribedOutbounds),
-    route: getRouteConfig(),
-  };
-}
-
-function useConfigTemplate(template, subscribedOutbounds) {
+export function getConfig(
+  subscribedOutbounds,
+  configTemplate = configTemplateDefault,
+) {
   // Generate replacements for the config template
   const replacements = {
     outbounds_tags: subscribedOutbounds.map((outbound) => outbound.tag),
     outbounds: subscribedOutbounds,
   };
-  return replacePlaceholdersInConfig(template, replacements);
+  return replacePlaceholdersInConfig(configTemplate, replacements);
 }
 
 // Function to recursively replace placeholders in a config template
