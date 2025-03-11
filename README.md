@@ -2,6 +2,10 @@
 
 > `v2sing` is a tool designed to seamlessly convert subscription links from the **v2** or **clash** subscription formats to the [**sing-box**](https://sing-box.sagernet.org/) format, ensuring compatibility and simplifying migration.
 
+## Supported Versions
+
+`v2sing` is compatible with `sing-box >=1.10.0`. For best results, use the latest stable release.
+
 ## Supported Protocols
 
 | Protocol        | Conversion (v2/clash → sing-box) |
