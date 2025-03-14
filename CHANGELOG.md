@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Updated `template.json` to support the `sing-box >=1.11.0` standard.
+- Updated `CHANGELOG.md` and `README.md` to reflect these changes.
+
 ## [0.0.3] - 2025-03-11
 
 Remove default config file generation; use template JSON as the sole configuration method

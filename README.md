@@ -4,7 +4,7 @@
 
 ## Supported Versions
 
-`v2sing` is compatible with `sing-box >=1.10.0`. For best results, use the latest stable release.
+`v2sing` is compatible with `sing-box >=1.11.0`. For best results, use the latest stable release.
 
 ## Supported Protocols
 
