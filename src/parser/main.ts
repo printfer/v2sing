@@ -1,12 +1,20 @@
 import { decodeBase64, isBase64 } from "./utils.ts";
 import { parseVmess } from "./vmess.ts";
 import { parseVless } from "./vless.ts";
-import { parseShadowsocks } from "./ss.ts";
+import { parseShadowsocks } from "./shadowsocks.ts";
 import { parseTrojan } from "./trojan.ts";
+import { parseHysteria2 } from "./hysteria2.ts";
 
 export function parseSubscription(
   subscription: string,
-): Record<string, unknown>[] {
+): [
+  Record<string, unknown>[],
+  {
+    failedLines: { line: string; error: string }[];
+    totalSuccess: number;
+    totalFailed: number;
+  },
+] {
   // Detect and decode Base64 if necessary
   if (isBase64(subscription)) {
     subscription = decodeBase64(subscription);
@@ -17,23 +25,30 @@ export function parseSubscription(
     line.trim() !== "" && !line.startsWith("#")
   );
 
-  const parsedSubscription = lines.map((line) => {
+  const parsedSubscription: Record<string, unknown>[] = [];
+  const failedLines: { line: string; error: string }[] = [];
+
+  for (const line of lines) {
     try {
+      let parsedLine;
       if (line.startsWith("vmess://")) {
-        return parseVmess(line);
+        parsedLine = parseVmess(line);
       } else if (line.startsWith("vless://")) {
-        return parseVless(line);
+        parsedLine = parseVless(line);
       } else if (line.startsWith("ss://")) {
-        return parseShadowsocks(line);
+        parsedLine = parseShadowsocks(line);
       } else if (line.startsWith("trojan://")) {
-        return parseTrojan(line);
+        parsedLine = parseTrojan(line);
+      } else if (line.startsWith("hysteria2://") || line.startsWith("hy2://")) {
+        parsedLine = parseHysteria2(line);
       } else {
-        throw new Error(`Unsupported protocol: ${line}`);
+        throw new Error(`Unsupported protocol`);
       }
+      parsedSubscription.push(parsedLine);
     } catch (error) {
-      throw new Error(`Error parsing line: ${line} (${error.message})`);
+      failedLines.push({ line, error: error.message });
     }
-  });
+  }
 
   // Filter out duplicate objects based on the 'tag' property
   const uniqueSubscriptionMap = new Map<string, Record<string, unknown>>();
@@ -43,6 +58,12 @@ export function parseSubscription(
     }
   }
 
-  // Return unique objects as an array
-  return Array.from(uniqueSubscriptionMap.values());
+  return [
+    Array.from(uniqueSubscriptionMap.values()),
+    {
+      failedLines,
+      totalSuccess: uniqueSubscriptionMap.size,
+      totalFailed: failedLines.length,
+    },
+  ];
 }

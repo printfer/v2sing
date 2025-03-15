@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Implemented a parser for the Hysteria2 protocol.
+- Improved subscription parsing with better error handling and detailed parsing statistics.
+
 ### Changed
 
 - Updated `template.json` to support the `sing-box >=1.11.0` standard.
+- Fixed a tag issue in the Shadowsocks parser and updated it to support more format variants.
+- Renamed Shadowsocks protocol-related files from `ss*` to `shadowsocks*`, using the full name instead of abbreviations in all cases.
+- Refined coding style for all parsers to improve professionalism and consistency.
 - Updated `CHANGELOG.md` and `README.md` to reflect these changes.
 
 ## [0.0.3] - 2025-03-11

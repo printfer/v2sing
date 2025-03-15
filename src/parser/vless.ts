@@ -68,7 +68,7 @@ export function parseVless(raw: string): Vless {
   return Object.fromEntries(
     Object.entries({
       type: "vless",
-      tag: tag ? tag : `vless_${getRandomString(10)}`,
+      tag: tag || `vless_${getRandomString(10)}`,
       server: url.hostname,
       server_port: parseInt(url.port, 10),
       uuid: url.username,

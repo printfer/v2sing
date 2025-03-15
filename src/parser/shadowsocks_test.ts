@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { parseShadowsocks } from "./ss.ts";
+import { parseShadowsocks } from "./shadowsocks.ts";
 
 Deno.test("parseShadowsocks - valid Shadowsocks URL with all parameters", () => {
   const raw =

@@ -23,9 +23,8 @@ type Vmess = {
 };
 
 export function parseVmess(raw: string): Vmess {
-  const content = raw.substring(8); // Remove "vmess://"
-  const decoded = decodeBase64(content);
-  const parsed = JSON.parse(decoded);
+  // Remove "vmess://" and decode
+  const parsed = JSON.parse(decodeBase64(raw.substring(8)));
 
   // Extracting TLS if applicable
   const tls = parsed.tls === "tls"
@@ -58,14 +57,14 @@ export function parseVmess(raw: string): Vmess {
   return Object.fromEntries(
     Object.entries({
       type: "vmess",
-      tag: parsed.ps ? parsed.ps : `vmess_${getRandomString(10)}`,
+      tag: parsed.ps || `vmess_${getRandomString(10)}`,
       server: parsed.add,
       server_port: parseInt(parsed.port, 10),
       uuid: parsed.id,
       security: parsed.scy,
       alter_id: parseInt(parsed.aid, 10),
-      tls: tls,
-      transport: transport,
+      tls,
+      transport,
     }).filter(([_, v]) => v !== null && v !== undefined),
   ) as Vmess;
 }

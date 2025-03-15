@@ -38,7 +38,9 @@ export default {
       const subscriptionContent = await fetchSubscriptionContent(
         subscriptionUrl,
       );
-      const singBoxSubscription = parseSubscription(subscriptionContent);
+      const [singBoxSubscription, parserInfo] = parseSubscription(
+        subscriptionContent,
+      );
 
       // If `config` query parameter is provided, fetch the template
       const configTemplateUrl = queryParams.config;
@@ -57,8 +59,24 @@ export default {
         singBoxConfig = getConfig(singBoxSubscription);
       }
 
-      // Logs query parameters for debugging.
-      console.log(JSON.stringify({ options: queryParams }, null, 2));
+      // Logs parser success and errors in a structured format
+      if (parserInfo.failedLines.length > 0) {
+        console.log("Failed Line Details:");
+        parserInfo.failedLines.forEach(({ line, error }) => {
+          console.log(`- Line: ${line}`);
+          console.log(`  Error: ${error}`);
+        });
+      }
+      // Logs parser statistics
+      console.log("Parser Summary:");
+      console.log(`- Total Successful Parses: ${parserInfo.totalSuccess}`);
+      console.log(`- Total Failed Parses: ${parserInfo.totalFailed}`);
+      // Logs query parameters for debugging
+      console.log("Query Information:");
+      Object.entries(queryParams).forEach(([key, value]) => {
+        console.log(`- ${key}: ${value}`);
+      });
+
       return createJsonResponse(singBoxConfig);
     } catch (error) {
       return createJsonResponse(

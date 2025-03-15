@@ -14,6 +14,7 @@
 | **VLESS**       | ✅                               |
 | **Shadowsocks** | ✅                               |
 | **Trojan**      | ✅                               |
+| **Hysteria2**   | ✅                               |
 
 ## Installation
 

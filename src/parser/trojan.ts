@@ -18,7 +18,7 @@ export function parseTrojan(raw: string): Trojan {
 
   // Split the main content from the fragment (#) for the tag
   const [mainContent, tagFragment] = url.split("#");
-  const tag = decodeURIComponent(tagFragment || "");
+  const tag = decodeURIComponent(tagFragment);
 
   // Extract password and server info
   const [passwordWithServer, serverInfo] = mainContent.split("@");
@@ -28,15 +28,17 @@ export function parseTrojan(raw: string): Trojan {
   // Extract query parameters
   const params = new URLSearchParams(serverInfo.split("?")[1] || "");
 
-  return {
-    type: "trojan",
-    tag: tag ? tag : `trojan_${getRandomString(10)}`,
-    server: server,
-    server_port: parseInt(port, 10),
-    password: password,
-    tls: {
-      enabled: params.get("security") === "tls",
-      server_name: params.get("sni") || "",
-    },
-  };
+  return Object.fromEntries(
+    Object.entries({
+      type: "trojan",
+      tag: tag || `trojan_${getRandomString(10)}`,
+      server,
+      server_port: parseInt(port, 10),
+      password: password,
+      tls: {
+        enabled: params.get("security") === "tls",
+        server_name: params.get("sni") || "",
+      },
+    }).filter(([_, v]) => v !== null && v !== undefined),
+  ) as Trojan;
 }
