@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed Shadowsocks protocol-related files from `ss*` to `shadowsocks*`, using the full name instead of abbreviations in all cases.
 - Refined coding style for all parsers to improve professionalism and consistency.
 - Updated `CHANGELOG.md` and `README.md` to reflect these changes.
+- Improved GitHub workflows for better CI experience.
 
 ## [0.0.3] - 2025-03-11
 

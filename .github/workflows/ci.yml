@@ -22,10 +22,10 @@ jobs:
           deno-version: v2.x
 
       - name: Run format check
-        run: deno task format
+        run: deno fmt --check src main*
 
       - name: Run lint check
-        run: deno task lint
+        run: deno lint
 
       - name: Run tests
-        run: deno task test
+        run: deno test -A
