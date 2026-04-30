@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-04-30
+
+### Added
+
+- Added real Clash / Mihomo YAML subscription parsing through top-level `proxies:` lists.
+- Added support for newer sing-box outbound fields across VMess, VLESS, Trojan, Shadowsocks, and Hysteria2 conversions.
+- Added support for Reality, uTLS fingerprints, ECH client options, WebSocket early data, HTTPUpgrade, HTTP/H2, gRPC, QUIC, SIP002 Shadowsocks plugins, UDP-over-TCP flags, and Hysteria2 port hopping.
+- Added URL-safe Base64 subscription decoding support.
+- Added IPv6 URI host handling for VLESS, Trojan, Shadowsocks, and Hysteria2 links.
+- Added broader parser test coverage for Clash YAML, URL-safe Base64, duplicate tags, mixed parse failures, IPv6 hosts, missing credentials, Shadowsocks legacy links, and Hysteria2 port ranges.
+
+### Changed
+
+- Updated parser validation to reject empty required URI credentials instead of generating invalid outbounds.
+- Updated Hysteria2 Clash-style port ranges from `start-end` to sing-box-compatible `start:end` output.
+- Updated `README.md` to document current input support, newer sing-box target compatibility, and unsupported transport behavior.
+- Updated build imports to use `deno.json` import mappings so `deno lint` passes with current Deno rules.
+
+### Fixed
+
+- Fixed Trojan URL parsing by using standard URL query handling for TLS and transport options.
+- Fixed Shadowsocks parsing for SIP002 and legacy full-Base64 URI variants.
+- Fixed malformed percent-escape handling in URI tags and credentials so parser failures are reported cleanly.
+- Fixed unsupported transports such as `xhttp` / `splithttp` being rejected explicitly instead of producing invalid sing-box transport output.
+
 ## [0.0.4] - 2025-03-16
 
 ### Added
