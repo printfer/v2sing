@@ -4,7 +4,9 @@ import {
   buildUriTransport,
   compactObject,
   nonEmptyString,
+  normalizeServerAddress,
   parsePacketEncoding,
+  requireString,
   safeDecodeURIComponent,
 } from "./shared.ts";
 
@@ -19,9 +21,9 @@ export function parseVless(raw: string): Record<string, unknown> {
   return compactObject({
     type: "vless",
     tag: buildTag(safeDecodeURIComponent(url.hash.substring(1)), "vless"),
-    server: url.hostname,
+    server: normalizeServerAddress(url.hostname),
     server_port: Number(url.port),
-    uuid: safeDecodeURIComponent(url.username),
+    uuid: requireString(safeDecodeURIComponent(url.username), "uuid"),
     flow: nonEmptyString(params.get("flow")),
     packet_encoding: parsePacketEncoding(
       params.get("packet-encoding"),

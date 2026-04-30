@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { parseHysteria2 } from "./hysteria2.ts";
 
 Deno.test("parseHysteria2 - valid Hysteria2 URL with all parameters", () => {
@@ -99,4 +99,29 @@ Deno.test("parseHysteria2 - keeps sing-box style port ranges", () => {
       enabled: true,
     },
   });
+});
+
+Deno.test("parseHysteria2 - supports IPv6 URI host", () => {
+  const raw = "hy2://password@[2001:db8::3]:443#IPv6";
+
+  const result = parseHysteria2(raw);
+
+  assertEquals(result, {
+    type: "hysteria2",
+    tag: "IPv6",
+    server: "2001:db8::3",
+    server_port: 443,
+    password: "password",
+    tls: {
+      enabled: true,
+    },
+  });
+});
+
+Deno.test("parseHysteria2 - rejects missing password", () => {
+  assertThrows(
+    () => parseHysteria2("hy2://@server.com:443#MissingPassword"),
+    Error,
+    "Missing password",
+  );
 });

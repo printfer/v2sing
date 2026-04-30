@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { parseTrojan } from "./trojan.ts";
 
 Deno.test("parseTrojan - valid Trojan URL with all parameters", () => {
@@ -53,4 +53,29 @@ Deno.test("parseTrojan - supports websocket and reality fields", () => {
       },
     },
   });
+});
+
+Deno.test("parseTrojan - supports IPv6 URI host", () => {
+  const raw = "trojan://password123@[2001:db8::2]:443#IPv6";
+
+  const result = parseTrojan(raw);
+
+  assertEquals(result, {
+    type: "trojan",
+    tag: "IPv6",
+    server: "2001:db8::2",
+    server_port: 443,
+    password: "password123",
+    tls: {
+      enabled: true,
+    },
+  });
+});
+
+Deno.test("parseTrojan - rejects missing password", () => {
+  assertThrows(
+    () => parseTrojan("trojan://@server.com:443#MissingPassword"),
+    Error,
+    "Missing password",
+  );
 });

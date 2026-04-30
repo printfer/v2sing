@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { parseShadowsocks } from "./shadowsocks.ts";
 
 Deno.test("parseShadowsocks - valid Shadowsocks URL with all parameters", () => {
@@ -49,4 +49,27 @@ Deno.test("parseShadowsocks - supports legacy full base64 URI", () => {
     method: "aes-256-gcm",
     password: "password",
   });
+});
+
+Deno.test("parseShadowsocks - supports IPv6 URI host", () => {
+  const raw = `ss://${btoa("aes-256-gcm:password")}@[2001:db8::4]:8388#IPv6`;
+
+  const result = parseShadowsocks(raw);
+
+  assertEquals(result, {
+    type: "shadowsocks",
+    tag: "IPv6",
+    server: "2001:db8::4",
+    server_port: 8388,
+    method: "aes-256-gcm",
+    password: "password",
+  });
+});
+
+Deno.test("parseShadowsocks - rejects missing password", () => {
+  assertThrows(
+    () => parseShadowsocks(`ss://${btoa("aes-256-gcm:")}@server.com:8388`),
+    Error,
+    "Missing password",
+  );
 });

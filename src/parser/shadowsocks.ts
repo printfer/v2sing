@@ -3,7 +3,9 @@ import {
   buildTag,
   compactObject,
   nonEmptyString,
+  normalizeServerAddress,
   parsePluginField,
+  requireString,
   safeDecodeURIComponent,
 } from "./shared.ts";
 import { decodeBase64 } from "./utils.ts";
@@ -48,10 +50,13 @@ export function parseShadowsocks(raw: string): Record<string, unknown> {
   return compactObject({
     type: "shadowsocks",
     tag: buildTag(safeDecodeURIComponent(rawTag), "shadowsocks"),
-    server: serverUrl.hostname,
+    server: normalizeServerAddress(serverUrl.hostname),
     server_port: Number(serverUrl.port),
-    method: credentials.substring(0, separatorIndex),
-    password: credentials.substring(separatorIndex + 1),
+    method: requireString(credentials.substring(0, separatorIndex), "method"),
+    password: requireString(
+      credentials.substring(separatorIndex + 1),
+      "password",
+    ),
     plugin: pluginField.plugin,
     plugin_opts: nonEmptyString(queryParams.get("plugin-opts")) ??
       nonEmptyString(queryParams.get("plugin_opts")) ??

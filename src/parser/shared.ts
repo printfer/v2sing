@@ -108,6 +108,12 @@ export function requireString(value: unknown, fieldName: string): string {
   return stringValue;
 }
 
+export function normalizeServerAddress(value: string): string {
+  return value.startsWith("[") && value.endsWith("]")
+    ? value.substring(1, value.length - 1)
+    : value;
+}
+
 export function requireNumber(value: unknown, fieldName: string): number {
   const numberValue = numberFromUnknown(value);
   if (numberValue === undefined) {

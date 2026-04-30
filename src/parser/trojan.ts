@@ -3,6 +3,8 @@ import {
   buildUriTls,
   buildUriTransport,
   compactObject,
+  normalizeServerAddress,
+  requireString,
   safeDecodeURIComponent,
 } from "./shared.ts";
 
@@ -17,13 +19,16 @@ export function parseTrojan(raw: string): Record<string, unknown> {
   return compactObject({
     type: "trojan",
     tag: buildTag(safeDecodeURIComponent(url.hash.substring(1)), "trojan"),
-    server: url.hostname,
+    server: normalizeServerAddress(url.hostname),
     server_port: Number(url.port),
-    password: url.password
-      ? `${safeDecodeURIComponent(url.username)}:${
-        safeDecodeURIComponent(url.password)
-      }`
-      : safeDecodeURIComponent(url.username),
+    password: requireString(
+      url.password
+        ? `${safeDecodeURIComponent(url.username)}:${
+          safeDecodeURIComponent(url.password)
+        }`
+        : safeDecodeURIComponent(url.username),
+      "password",
+    ),
     tls: buildUriTls(params, true),
     transport: buildUriTransport(params),
   });

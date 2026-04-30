@@ -1,4 +1,4 @@
-import { assertEquals, assertMatch } from "@std/assert";
+import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { parseVless } from "./vless.ts";
 
 Deno.test("parseVless - valid VLESS URL with all parameters", () => {
@@ -86,4 +86,26 @@ Deno.test("parseVless - preserves malformed tag escapes", () => {
     server_port: 443,
     uuid: "uuid",
   });
+});
+
+Deno.test("parseVless - supports IPv6 URI host", () => {
+  const raw = "vless://uuid@[2001:db8::1]:443#IPv6";
+
+  const result = parseVless(raw);
+
+  assertEquals(result, {
+    type: "vless",
+    tag: "IPv6",
+    server: "2001:db8::1",
+    server_port: 443,
+    uuid: "uuid",
+  });
+});
+
+Deno.test("parseVless - rejects missing UUID", () => {
+  assertThrows(
+    () => parseVless("vless://@server.com:443#MissingUUID"),
+    Error,
+    "Missing uuid",
+  );
 });

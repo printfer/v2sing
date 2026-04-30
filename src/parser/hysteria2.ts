@@ -4,9 +4,11 @@ import {
   compactObject,
   networkFromUdpFlag,
   nonEmptyString,
+  normalizeServerAddress,
   parseBandwidth,
   parseHopInterval,
   parseServerPorts,
+  requireString,
   safeDecodeURIComponent,
 } from "./shared.ts";
 
@@ -24,7 +26,7 @@ export function parseHysteria2(raw: string): Record<string, unknown> {
   return compactObject({
     type: "hysteria2",
     tag: buildTag(safeDecodeURIComponent(url.hash.substring(1)), "hysteria2"),
-    server: url.hostname,
+    server: normalizeServerAddress(url.hostname),
     server_port: serverPorts ? undefined : Number(url.port),
     server_ports: serverPorts,
     ...parseHopInterval(
@@ -32,11 +34,14 @@ export function parseHysteria2(raw: string): Record<string, unknown> {
     ),
     up_mbps: parseBandwidth(params.get("up")),
     down_mbps: parseBandwidth(params.get("down")),
-    password: url.password
-      ? `${safeDecodeURIComponent(url.username)}:${
-        safeDecodeURIComponent(url.password)
-      }`
-      : safeDecodeURIComponent(url.username),
+    password: requireString(
+      url.password
+        ? `${safeDecodeURIComponent(url.username)}:${
+          safeDecodeURIComponent(url.password)
+        }`
+        : safeDecodeURIComponent(url.username),
+      "password",
+    ),
     bbr_profile: nonEmptyString(
       params.get("bbr-profile") ?? params.get("bbr_profile"),
     ),
