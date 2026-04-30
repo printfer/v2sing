@@ -7,6 +7,7 @@ import {
   parseBandwidth,
   parseHopInterval,
   parseServerPorts,
+  safeDecodeURIComponent,
 } from "./shared.ts";
 
 export function parseHysteria2(raw: string): Record<string, unknown> {
@@ -22,7 +23,7 @@ export function parseHysteria2(raw: string): Record<string, unknown> {
 
   return compactObject({
     type: "hysteria2",
-    tag: buildTag(decodeURIComponent(url.hash.substring(1)), "hysteria2"),
+    tag: buildTag(safeDecodeURIComponent(url.hash.substring(1)), "hysteria2"),
     server: url.hostname,
     server_port: serverPorts ? undefined : Number(url.port),
     server_ports: serverPorts,
@@ -32,10 +33,10 @@ export function parseHysteria2(raw: string): Record<string, unknown> {
     up_mbps: parseBandwidth(params.get("up")),
     down_mbps: parseBandwidth(params.get("down")),
     password: url.password
-      ? `${decodeURIComponent(url.username)}:${
-        decodeURIComponent(url.password)
+      ? `${safeDecodeURIComponent(url.username)}:${
+        safeDecodeURIComponent(url.password)
       }`
-      : decodeURIComponent(url.username),
+      : safeDecodeURIComponent(url.username),
     bbr_profile: nonEmptyString(
       params.get("bbr-profile") ?? params.get("bbr_profile"),
     ),

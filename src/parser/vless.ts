@@ -5,6 +5,7 @@ import {
   compactObject,
   nonEmptyString,
   parsePacketEncoding,
+  safeDecodeURIComponent,
 } from "./shared.ts";
 
 export function parseVless(raw: string): Record<string, unknown> {
@@ -17,10 +18,10 @@ export function parseVless(raw: string): Record<string, unknown> {
 
   return compactObject({
     type: "vless",
-    tag: buildTag(decodeURIComponent(url.hash.substring(1)), "vless"),
+    tag: buildTag(safeDecodeURIComponent(url.hash.substring(1)), "vless"),
     server: url.hostname,
     server_port: Number(url.port),
-    uuid: decodeURIComponent(url.username),
+    uuid: safeDecodeURIComponent(url.username),
     flow: nonEmptyString(params.get("flow")),
     packet_encoding: parsePacketEncoding(
       params.get("packet-encoding"),

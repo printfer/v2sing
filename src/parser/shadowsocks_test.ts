@@ -35,3 +35,18 @@ Deno.test("parseShadowsocks - supports SIP002 user info and plugin fields", () =
     plugin_opts: "mode=websocket;host=cdn.example.com",
   });
 });
+
+Deno.test("parseShadowsocks - supports legacy full base64 URI", () => {
+  const raw = `ss://${btoa("aes-256-gcm:password@example.com:8388")}#LegacyTag`;
+
+  const result = parseShadowsocks(raw);
+
+  assertEquals(result, {
+    type: "shadowsocks",
+    tag: "LegacyTag",
+    server: "example.com",
+    server_port: 8388,
+    method: "aes-256-gcm",
+    password: "password",
+  });
+});

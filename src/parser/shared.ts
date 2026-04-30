@@ -219,7 +219,8 @@ export function buildClashTransport(
     return buildTransport({
       type: useHttpUpgrade ? "httpupgrade" : "ws",
       path: websocketOptions?.path,
-      host: readRecord(websocketOptions?.headers)?.Host,
+      host: readRecord(websocketOptions?.headers)?.Host ??
+        readRecord(websocketOptions?.headers)?.host,
       headers: websocketOptions?.headers,
       maxEarlyData: websocketOptions?.["max-early-data"],
       earlyDataHeaderName: websocketOptions?.["early-data-header-name"],
@@ -319,7 +320,15 @@ export function parseHopInterval(
 }
 
 export function parseServerPorts(value: unknown): string[] | undefined {
-  return stringArray(value);
+  return stringArray(value)?.map(normalizeServerPortRange);
+}
+
+export function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 export function pluginOptionsToString(value: unknown): string | undefined {
@@ -562,6 +571,10 @@ function firstPath(value: unknown): string | undefined {
 
 function firstHost(value: unknown): string | undefined {
   return stringArray(value)?.[0];
+}
+
+function normalizeServerPortRange(value: string): string {
+  return /^\d+-\d+$/.test(value) ? value.replace("-", ":") : value;
 }
 
 function isEmptyValue(value: unknown): boolean {

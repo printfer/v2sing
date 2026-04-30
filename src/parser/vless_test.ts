@@ -73,3 +73,17 @@ Deno.test("parseVless - supports reality and websocket options", () => {
     },
   });
 });
+
+Deno.test("parseVless - preserves malformed tag escapes", () => {
+  const raw = "vless://uuid@server.com:443#Bad%Tag";
+
+  const result = parseVless(raw);
+
+  assertEquals(result, {
+    type: "vless",
+    tag: "Bad%Tag",
+    server: "server.com",
+    server_port: 443,
+    uuid: "uuid",
+  });
+});

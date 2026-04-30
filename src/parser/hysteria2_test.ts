@@ -65,7 +65,7 @@ Deno.test("parseHysteria2 - supports port hopping and userpass alias", () => {
     type: "hysteria2",
     tag: "HopTag",
     server: "example.com",
-    server_ports: ["443-8443"],
+    server_ports: ["443:8443"],
     hop_interval: "15s",
     hop_interval_max: "30s",
     up_mbps: 30,
@@ -80,6 +80,23 @@ Deno.test("parseHysteria2 - supports port hopping and userpass alias", () => {
     obfs: {
       type: "salamander",
       password: "secret",
+    },
+  });
+});
+
+Deno.test("parseHysteria2 - keeps sing-box style port ranges", () => {
+  const raw = "hy2://pass@example.com:443?ports=2080:3000,4000#RangeTag";
+
+  const result = parseHysteria2(raw);
+
+  assertEquals(result, {
+    type: "hysteria2",
+    tag: "RangeTag",
+    server: "example.com",
+    server_ports: ["2080:3000", "4000"],
+    password: "pass",
+    tls: {
+      enabled: true,
     },
   });
 });

@@ -60,7 +60,7 @@ proxies:
       type: "hysteria2",
       tag: "ClashHy2",
       server: "hy2.example.com",
-      server_ports: ["443-8443"],
+      server_ports: ["443:8443"],
       hop_interval: "20s",
       hop_interval_max: "40s",
       password: "secret",
@@ -106,4 +106,182 @@ proxies:
   assertEquals(info.totalSuccess, 0);
   assertEquals(info.totalFailed, 1);
   assertMatch(info.failedLines[0].error, /Unsupported transport type: xhttp/);
+});
+
+Deno.test("parseSubscription - supports url-safe base64 subscriptions", () => {
+  const encodedSubscription = btoa("trojan://password@example.com:443#UrlSafe")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  const [result, info] = parseSubscription(encodedSubscription);
+
+  assertEquals(info.failedLines, []);
+  assertEquals(info.totalSuccess, 1);
+  assertEquals(info.totalFailed, 0);
+  assertEquals(result[0], {
+    type: "trojan",
+    tag: "UrlSafe",
+    server: "example.com",
+    server_port: 443,
+    password: "password",
+    tls: {
+      enabled: true,
+    },
+  });
+});
+
+Deno.test("parseSubscription - deduplicates by tag", () => {
+  const subscription = [
+    "vless://uuid-1@example.com:443#SameTag",
+    "vless://uuid-2@example.org:443#SameTag",
+  ].join("\n");
+
+  const [result, info] = parseSubscription(subscription);
+
+  assertEquals(info.failedLines, []);
+  assertEquals(info.totalSuccess, 1);
+  assertEquals(info.totalFailed, 0);
+  assertEquals(result, [
+    {
+      type: "vless",
+      tag: "SameTag",
+      server: "example.com",
+      server_port: 443,
+      uuid: "uuid-1",
+    },
+  ]);
+});
+
+Deno.test("parseSubscription - reports mixed line failures without aborting", () => {
+  const subscription = [
+    "vless://uuid@example.com:443#Ok",
+    "unsupported://example.com",
+    "vless://uuid@example.com:443?type=xhttp#BadTransport",
+  ].join("\n");
+
+  const [result, info] = parseSubscription(subscription);
+
+  assertEquals(result, [
+    {
+      type: "vless",
+      tag: "Ok",
+      server: "example.com",
+      server_port: 443,
+      uuid: "uuid",
+    },
+  ]);
+  assertEquals(info.totalSuccess, 1);
+  assertEquals(info.totalFailed, 2);
+  assertMatch(info.failedLines[0].error, /Unsupported protocol/);
+  assertMatch(info.failedLines[1].error, /Unsupported transport type: xhttp/);
+});
+
+Deno.test("parseSubscription - supports broader Clash proxy fields", () => {
+  const subscription = `
+proxies:
+  - name: ClashVLESSReality
+    type: vless
+    server: vless.example.com
+    port: 443
+    uuid: uuid
+    flow: xtls-rprx-vision
+    packet-encoding: xudp
+    tls: true
+    servername: reality.example.com
+    client-fingerprint: chrome
+    reality-opts:
+      public-key: public-key
+      short-id: abcd
+    network: grpc
+    grpc-opts:
+      grpc-service-name: grpc-service
+  - name: ClashSS
+    type: ss
+    server: ss.example.com
+    port: 8388
+    cipher: 2022-blake3-aes-256-gcm
+    password: secret
+    udp-over-tcp: true
+    plugin: v2ray-plugin
+    plugin-opts:
+      mode: websocket
+      host: cdn.example.com
+  - name: ClashTrojanUpgrade
+    type: trojan
+    server: trojan.example.com
+    port: 443
+    password: secret
+    sni: trojan.example.com
+    network: ws
+    ws-opts:
+      path: /upgrade
+      headers:
+        host: cdn.example.com
+      v2ray-http-upgrade: true
+`;
+
+  const [result, info] = parseSubscription(subscription);
+
+  assertEquals(info.failedLines, []);
+  assertEquals(info.totalSuccess, 3);
+  assertEquals(info.totalFailed, 0);
+  assertEquals(result, [
+    {
+      type: "vless",
+      tag: "ClashVLESSReality",
+      server: "vless.example.com",
+      server_port: 443,
+      uuid: "uuid",
+      flow: "xtls-rprx-vision",
+      packet_encoding: "xudp",
+      tls: {
+        enabled: true,
+        server_name: "reality.example.com",
+        utls: {
+          enabled: true,
+          fingerprint: "chrome",
+        },
+        reality: {
+          enabled: true,
+          public_key: "public-key",
+          short_id: "abcd",
+        },
+      },
+      transport: {
+        type: "grpc",
+        service_name: "grpc-service",
+      },
+    },
+    {
+      type: "shadowsocks",
+      tag: "ClashSS",
+      server: "ss.example.com",
+      server_port: 8388,
+      method: "2022-blake3-aes-256-gcm",
+      password: "secret",
+      plugin: "v2ray-plugin",
+      plugin_opts: "mode=websocket;host=cdn.example.com",
+      udp_over_tcp: true,
+    },
+    {
+      type: "trojan",
+      tag: "ClashTrojanUpgrade",
+      server: "trojan.example.com",
+      server_port: 443,
+      password: "secret",
+      tls: {
+        enabled: true,
+        server_name: "trojan.example.com",
+      },
+      transport: {
+        type: "httpupgrade",
+        host: "cdn.example.com",
+        path: "/upgrade",
+        headers: {
+          host: "cdn.example.com",
+        },
+      },
+    },
+  ]);
 });

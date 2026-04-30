@@ -4,6 +4,7 @@ import {
   compactObject,
   nonEmptyString,
   parsePluginField,
+  safeDecodeURIComponent,
 } from "./shared.ts";
 import { decodeBase64 } from "./utils.ts";
 
@@ -68,12 +69,4 @@ function decodeCredentials(value: string): string {
   }
 
   return decodeBase64(value);
-}
-
-function safeDecodeURIComponent(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
 }
