@@ -1,44 +1,29 @@
-import { getRandomString } from "./utils.ts";
+import {
+  buildTag,
+  buildUriTls,
+  buildUriTransport,
+  compactObject,
+} from "./shared.ts";
 
-export type Trojan = {
-  type: "trojan";
-  tag: string;
-  server: string;
-  server_port: number;
-  password: string;
-  tls: {
-    enabled: boolean;
-    server_name?: string;
-  };
-};
+export function parseTrojan(raw: string): Record<string, unknown> {
+  const url = new URL(raw);
+  const params = url.searchParams;
 
-export function parseTrojan(raw: string): Trojan {
-  // Remove the `trojan://` prefix
-  const url = raw.substring(9);
+  if (!url.port) {
+    throw new Error("Missing port");
+  }
 
-  // Split the main content from the fragment (#) for the tag
-  const [mainContent, tagFragment] = url.split("#");
-  const tag = decodeURIComponent(tagFragment);
-
-  // Extract password and server info
-  const [passwordWithServer, serverInfo] = mainContent.split("@");
-  const [password] = passwordWithServer.split(":"); // Password is before the `:`
-  const [server, port] = serverInfo.split(":");
-
-  // Extract query parameters
-  const params = new URLSearchParams(serverInfo.split("?")[1] || "");
-
-  return Object.fromEntries(
-    Object.entries({
-      type: "trojan",
-      tag: tag || `trojan_${getRandomString(10)}`,
-      server,
-      server_port: parseInt(port, 10),
-      password: password,
-      tls: {
-        enabled: params.get("security") === "tls",
-        server_name: params.get("sni") || "",
-      },
-    }).filter(([_, v]) => v !== null && v !== undefined),
-  ) as Trojan;
+  return compactObject({
+    type: "trojan",
+    tag: buildTag(decodeURIComponent(url.hash.substring(1)), "trojan"),
+    server: url.hostname,
+    server_port: Number(url.port),
+    password: url.password
+      ? `${decodeURIComponent(url.username)}:${
+        decodeURIComponent(url.password)
+      }`
+      : decodeURIComponent(url.username),
+    tls: buildUriTls(params, true),
+    transport: buildUriTransport(params),
+  });
 }

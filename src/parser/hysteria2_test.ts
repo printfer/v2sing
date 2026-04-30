@@ -51,6 +51,35 @@ Deno.test("parseHysteria2 - valid URL with no tag (should generate one)", () => 
   assertEquals(result.server, "vpn.example.net");
   assertEquals(result.server_port, 5000);
   assertEquals(result.password, "randompass");
-  assertEquals(result.tls.enabled, true);
+  assertEquals((result.tls as { enabled: boolean }).enabled, true);
   assertEquals(typeof result.tag, "string"); // Should have a generated tag
+});
+
+Deno.test("parseHysteria2 - supports port hopping and userpass alias", () => {
+  const raw =
+    "hy2://user:pass@example.com:443?ports=443-8443&hop-interval=15-30&up=30%20Mbps&down=200&obfs=salamander&obfs-password=secret&sni=example.com&alpn=h3&bbr-profile=aggressive#HopTag";
+
+  const result = parseHysteria2(raw);
+
+  assertEquals(result, {
+    type: "hysteria2",
+    tag: "HopTag",
+    server: "example.com",
+    server_ports: ["443-8443"],
+    hop_interval: "15s",
+    hop_interval_max: "30s",
+    up_mbps: 30,
+    down_mbps: 200,
+    password: "user:pass",
+    bbr_profile: "aggressive",
+    tls: {
+      enabled: true,
+      server_name: "example.com",
+      alpn: ["h3"],
+    },
+    obfs: {
+      type: "salamander",
+      password: "secret",
+    },
+  });
 });

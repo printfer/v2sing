@@ -28,9 +28,48 @@ Deno.test("parseVless - valid VLESS URL without optional fields", () => {
 
   const result = parseVless(raw);
 
-  assertMatch(result.tag, /^vless_/); // Check that the tag matches the pattern
+  assertMatch(result.tag as string, /^vless_/); // Check that the tag matches the pattern
   assertEquals(result.type, "vless");
   assertEquals(result.server, "server.com");
   assertEquals(result.server_port, 443);
   assertEquals(result.uuid, "uuid");
+});
+
+Deno.test("parseVless - supports reality and websocket options", () => {
+  const raw =
+    "vless://uuid@server.com:443?type=ws&path=%2Fws&host=example.com&flow=xtls-rprx-vision&packet-encoding=xudp&security=reality&sni=example.com&fp=chrome&pbk=pubkey&sid=abcd&ed=2048&eh=Sec-WebSocket-Protocol#RealityTag";
+
+  const result = parseVless(raw);
+
+  assertEquals(result, {
+    type: "vless",
+    tag: "RealityTag",
+    server: "server.com",
+    server_port: 443,
+    uuid: "uuid",
+    flow: "xtls-rprx-vision",
+    packet_encoding: "xudp",
+    tls: {
+      enabled: true,
+      server_name: "example.com",
+      utls: {
+        enabled: true,
+        fingerprint: "chrome",
+      },
+      reality: {
+        enabled: true,
+        public_key: "pubkey",
+        short_id: "abcd",
+      },
+    },
+    transport: {
+      type: "ws",
+      path: "/ws",
+      headers: {
+        Host: "example.com",
+      },
+      max_early_data: 2048,
+      early_data_header_name: "Sec-WebSocket-Protocol",
+    },
+  });
 });

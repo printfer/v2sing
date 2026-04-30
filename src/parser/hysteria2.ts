@@ -1,65 +1,53 @@
-import { getRandomString } from "./utils.ts";
+import {
+  buildTag,
+  buildUriTls,
+  compactObject,
+  networkFromUdpFlag,
+  nonEmptyString,
+  parseBandwidth,
+  parseHopInterval,
+  parseServerPorts,
+} from "./shared.ts";
 
-type Hysteria2 = {
-  type: "hysteria2";
-  tag: string;
-  server: string;
-  server_port: number;
-  password: string;
-  tls: {
-    enabled: boolean;
-    server_name?: string;
-    insecure?: boolean;
-  };
-  obfs?: {
-    type: string;
-    password?: string;
-  };
-};
+export function parseHysteria2(raw: string): Record<string, unknown> {
+  const url = new URL(raw);
+  const params = url.searchParams;
+  const serverPorts = parseServerPorts(
+    params.get("ports") ?? params.get("server_ports") ?? params.get("mport"),
+  );
 
-export function parseHysteria2(raw: string): Hysteria2 {
-  // Remove the `hysteria2://` or `hy2://` prefix
-  const url = raw.startsWith("hysteria2://")
-    ? raw.substring(12)
-    : raw.substring(6);
+  if (!serverPorts && !url.port) {
+    throw new Error("Missing port");
+  }
 
-  // Extract tag (server alias)
-  const [mainContent, tagFragment] = url.split("#");
-  const tag = decodeURIComponent(tagFragment);
-
-  // Extract query parameters
-  const [authServerPart, queryString] = mainContent.split("?");
-  const queryParams = new URLSearchParams(queryString || "");
-
-  // Extract authentication credentials and server details safely
-  const [auth, serverInfo = ""] = authServerPart.split("@");
-  const [server, portStr] = serverInfo.split(":");
-
-  // Extract optional settings
-  const sni = queryParams.get("sni");
-  const insecure = queryParams.get("insecure") === "1";
-  const obfs = queryParams.get("obfs");
-  const obfs_password = queryParams.get("obfs-password");
-
-  // Construct output JSON structure
-  return Object.fromEntries(
-    Object.entries({
-      type: "hysteria2",
-      tag: tag || `hysteria2_${getRandomString(10)}`,
-      server,
-      server_port: parseInt(portStr, 10),
-      password: auth,
-      tls: {
-        enabled: true,
-        ...(sni && { server_name: sni }),
-        ...(insecure && { insecure: true }),
-      },
-      ...(obfs && {
-        obfs: {
-          type: obfs,
-          ...(obfs_password && { password: obfs_password }),
-        },
-      }),
-    }).filter(([_, v]) => v !== null && v !== undefined),
-  ) as Hysteria2;
+  return compactObject({
+    type: "hysteria2",
+    tag: buildTag(decodeURIComponent(url.hash.substring(1)), "hysteria2"),
+    server: url.hostname,
+    server_port: serverPorts ? undefined : Number(url.port),
+    server_ports: serverPorts,
+    ...parseHopInterval(
+      params.get("hop-interval") ?? params.get("hop_interval"),
+    ),
+    up_mbps: parseBandwidth(params.get("up")),
+    down_mbps: parseBandwidth(params.get("down")),
+    password: url.password
+      ? `${decodeURIComponent(url.username)}:${
+        decodeURIComponent(url.password)
+      }`
+      : decodeURIComponent(url.username),
+    bbr_profile: nonEmptyString(
+      params.get("bbr-profile") ?? params.get("bbr_profile"),
+    ),
+    network: networkFromUdpFlag({ udp: params.get("udp") }),
+    tls: buildUriTls(params, true),
+    obfs: params.get("obfs")
+      ? compactObject({
+        type: nonEmptyString(params.get("obfs")),
+        password: nonEmptyString(
+          params.get("obfs-password") ?? params.get("obfs_password"),
+        ),
+      })
+      : undefined,
+  });
 }

@@ -1,45 +1,79 @@
-import { decodeBase64, getRandomString, isBase64 } from "./utils.ts";
+import {
+  booleanFromUnknown,
+  buildTag,
+  compactObject,
+  nonEmptyString,
+  parsePluginField,
+} from "./shared.ts";
+import { decodeBase64 } from "./utils.ts";
 
-type Shadowsocks = {
-  type: "shadowsocks";
-  tag: string;
-  server: string;
-  server_port: number;
-  method: string;
-  password: string;
-};
+export function parseShadowsocks(raw: string): Record<string, unknown> {
+  const urlWithoutScheme = raw.substring(5);
+  const [contentWithoutFragment, rawTag = ""] = urlWithoutScheme.split("#", 2);
+  const [mainContent, queryString = ""] = contentWithoutFragment.split("?", 2);
 
-export function parseShadowsocks(raw: string): Shadowsocks {
-  // Remove the `ss://` prefix from the input string
-  const url = raw.substring(5);
+  let credentialsPart: string;
+  let serverPart: string;
 
-  // Split the main content from the fragment (`#`) to extract the optional tag
-  const [mainContent, tagFragment] = url.split("#");
-  const tag = decodeURIComponent(tagFragment || "");
+  if (mainContent.includes("@")) {
+    const separatorIndex = mainContent.lastIndexOf("@");
+    credentialsPart = mainContent.substring(0, separatorIndex);
+    serverPart = mainContent.substring(separatorIndex + 1);
+  } else {
+    const decodedMainContent = decodeBase64(mainContent);
+    const separatorIndex = decodedMainContent.lastIndexOf("@");
+    if (separatorIndex === -1) {
+      throw new Error("Invalid shadowsocks URI");
+    }
 
-  // Determine if the main content is Base64-encoded (a common format for Shadowsocks URIs)
-  const mainInfo = isBase64(mainContent)
-    ? decodeBase64(mainContent)
-    : mainContent;
+    credentialsPart = decodedMainContent.substring(0, separatorIndex);
+    serverPart = decodedMainContent.substring(separatorIndex + 1);
+  }
 
-  // Split credentials and server information using `@`
-  const [encodedCredentials, serverInfo] = mainInfo.split("@");
+  const credentials = decodeCredentials(credentialsPart);
+  const separatorIndex = credentials.indexOf(":");
+  if (separatorIndex === -1) {
+    throw new Error("Invalid shadowsocks credentials");
+  }
 
-  // Decode the Base64-encoded credentials (method:password)
-  const decodedCredentials = decodeBase64(encodedCredentials);
-  const [method, password] = decodedCredentials.split(":");
+  const serverUrl = new URL(`http://${serverPart}`);
+  if (!serverUrl.port) {
+    throw new Error("Missing port");
+  }
 
-  // Extract the server address and port number
-  const [server, port] = serverInfo.split(":");
+  const queryParams = new URLSearchParams(queryString);
+  const pluginField = parsePluginField(queryParams.get("plugin"));
 
-  return Object.fromEntries(
-    Object.entries({
-      type: "shadowsocks",
-      tag: tag || `shadowsocks_${getRandomString(10)}`, // Use provided tag or generate a random one
-      server,
-      server_port: parseInt(port, 10), // Convert port to an integer
-      method,
-      password,
-    }).filter(([_, v]) => v !== null && v !== undefined),
-  ) as Shadowsocks;
+  return compactObject({
+    type: "shadowsocks",
+    tag: buildTag(safeDecodeURIComponent(rawTag), "shadowsocks"),
+    server: serverUrl.hostname,
+    server_port: Number(serverUrl.port),
+    method: credentials.substring(0, separatorIndex),
+    password: credentials.substring(separatorIndex + 1),
+    plugin: pluginField.plugin,
+    plugin_opts: nonEmptyString(queryParams.get("plugin-opts")) ??
+      nonEmptyString(queryParams.get("plugin_opts")) ??
+      pluginField.plugin_opts,
+    udp_over_tcp: booleanFromUnknown(
+      queryParams.get("udp-over-tcp") ?? queryParams.get("uot"),
+    ),
+  });
+}
+
+function decodeCredentials(value: string): string {
+  const decodedValue = safeDecodeURIComponent(value);
+  if (decodedValue.includes(":")) {
+    return decodedValue;
+  }
+
+  return decodeBase64(value);
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }

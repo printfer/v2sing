@@ -1,23 +1,6 @@
 export function decodeBase64(base64: string): string {
-  // Regular expression to match valid Base64 strings
-  const base64Regex = /[A-Za-z0-9+/=]+/;
-
-  // Ensure valid padding for Base64 string
-  while (base64.length % 4 !== 0) {
-    base64 += "=";
-  }
-
-  // Extract the Base64 part
-  const match = base64.match(base64Regex);
-
-  if (!match) {
-    throw new Error("No valid Base64 string found in: ${base64}");
-  }
-
-  // Decode Base64 to binary string
-  const binaryString = atob(match[0].trim());
-
-  // Convert binary string to a proper UTF-8 string
+  const normalizedBase64 = normalizeBase64(base64);
+  const binaryString = atob(padBase64(normalizedBase64));
   const utf8Decoder = new TextDecoder("utf-8");
   const binaryArray = Uint8Array.from(
     binaryString,
@@ -27,19 +10,37 @@ export function decodeBase64(base64: string): string {
 }
 
 export function isBase64(str: string): boolean {
-  // Check if the string matches the Base64 pattern
-  const base64Regex =
-    /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
-  if (!base64Regex.test(str)) {
+  const normalizedBase64 = normalizeBase64(str);
+  if (
+    normalizedBase64 === "" ||
+    normalizedBase64.length % 4 === 1 ||
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(padBase64(normalizedBase64))
+  ) {
     return false;
   }
 
   try {
-    // Attempt to decode the string to validate it's valid Base64
-    return btoa(atob(str)) === str;
+    const paddedBase64 = padBase64(normalizedBase64);
+    return btoa(atob(paddedBase64)).replace(/=+$/, "") ===
+      paddedBase64.replace(/=+$/, "");
   } catch {
     return false;
   }
+}
+
+function normalizeBase64(base64: string): string {
+  return base64.trim().replace(/\s+/g, "").replace(/-/g, "+").replace(
+    /_/g,
+    "/",
+  );
+}
+
+function padBase64(base64: string): string {
+  let paddedBase64 = base64;
+  while (paddedBase64.length % 4 !== 0) {
+    paddedBase64 += "=";
+  }
+  return paddedBase64;
 }
 
 export function getRandomString(length: number): string {

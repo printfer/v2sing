@@ -1,70 +1,117 @@
-import { decodeBase64, getRandomString } from "./utils.ts";
+import {
+  booleanFromUnknown,
+  buildTag,
+  buildUriTls,
+  buildUriTransport,
+  compactObject,
+  nonEmptyString,
+  numberFromUnknown,
+  parsePacketEncoding,
+  requireNumber,
+  requireString,
+  type UnknownRecord,
+} from "./shared.ts";
+import { decodeBase64 } from "./utils.ts";
 
-type Vmess = {
-  type: "vmess";
-  tag: string;
-  server: string;
-  server_port: number;
-  uuid: string;
-  security: string;
-  alter_id: number;
-  tls?: {
-    enabled: boolean;
-    server_name?: string;
-  };
-  transport?: {
-    type: string;
-    path?: string;
-    service_name?: string;
-    headers?: {
-      Host: string;
-    };
-  };
-};
+export function parseVmess(raw: string): Record<string, unknown> {
+  const parsed = JSON.parse(decodeBase64(raw.substring(8))) as UnknownRecord;
+  const tlsMode = nonEmptyString(parsed.tls)?.toLowerCase();
+  const tlsParams = new URLSearchParams();
+  const transportParams = new URLSearchParams();
 
-export function parseVmess(raw: string): Vmess {
-  // Remove "vmess://" and decode
-  const parsed = JSON.parse(decodeBase64(raw.substring(8)));
+  setParam(tlsParams, "security", tlsMode);
+  setParam(
+    tlsParams,
+    "sni",
+    parsed.sni ?? parsed.serverName ?? parsed.server_name,
+  );
+  setParam(tlsParams, "alpn", parsed.alpn);
+  setParam(tlsParams, "fp", parsed.fp);
+  setParam(tlsParams, "allowInsecure", parsed.allowInsecure ?? parsed.insecure);
+  setParam(
+    tlsParams,
+    "pbk",
+    parsed.pbk ?? parsed.publicKey ?? parsed.public_key,
+  );
+  setParam(tlsParams, "sid", parsed.sid ?? parsed.shortId ?? parsed.short_id);
+  setParam(
+    tlsParams,
+    "ech",
+    parsed.ech ?? parsed.echConfig ?? parsed.ech_config,
+  );
 
-  // Extracting TLS if applicable
-  const tls = parsed.tls === "tls"
-    ? {
-      enabled: true,
-      server_name: parsed.sni,
+  setParam(transportParams, "type", parsed.net ?? parsed.network);
+  setParam(transportParams, "path", parsed.path);
+  setParam(transportParams, "host", parsed.host);
+  setParam(
+    transportParams,
+    "serviceName",
+    parsed.serviceName ?? parsed.service_name,
+  );
+  setParam(transportParams, "method", parsed.method);
+  setParam(
+    transportParams,
+    "ed",
+    parsed.ed ?? parsed.maxEarlyData ?? parsed.max_early_data,
+  );
+  setParam(
+    transportParams,
+    "eh",
+    parsed.eh ?? parsed.earlyDataHeaderName ?? parsed.early_data_header_name,
+  );
+
+  return compactObject({
+    type: "vmess",
+    tag: buildTag(parsed.ps, "vmess"),
+    server: requireString(parsed.add, "server"),
+    server_port: requireNumber(parsed.port, "port"),
+    uuid: requireString(parsed.id, "uuid"),
+    security: nonEmptyString(parsed.scy) ?? nonEmptyString(parsed.cipher) ??
+      "auto",
+    alter_id: numberFromUnknown(parsed.aid) ??
+      numberFromUnknown(parsed.alterId) ?? 0,
+    global_padding: booleanFromUnknown(
+      parsed.globalPadding ?? parsed.global_padding ?? parsed["global-padding"],
+    ),
+    authenticated_length: booleanFromUnknown(
+      parsed.authenticatedLength ??
+        parsed.authenticated_length ??
+        parsed["authenticated-length"],
+    ),
+    packet_encoding: parsePacketEncoding(
+      parsed.packetEncoding,
+      parsed.packet_encoding,
+      parsed["packet-encoding"],
+    ),
+    tls: buildUriTls(tlsParams),
+    transport: buildUriTransport(transportParams),
+  });
+}
+
+function setParam(
+  params: URLSearchParams,
+  key: string,
+  value: unknown,
+): void {
+  if (Array.isArray(value)) {
+    const serializedValue = value
+      .map((item) => nonEmptyString(item))
+      .filter((item): item is string => item !== undefined)
+      .join(",");
+
+    if (serializedValue) {
+      params.set(key, serializedValue);
     }
-    : undefined;
-
-  // Extracting transport and headers only if not TCP
-  let transport: Vmess["transport"] | undefined;
-  if (parsed.net !== "tcp") {
-    transport = {
-      type: parsed.net,
-    };
-
-    if (parsed.net === "grpc") {
-      transport.service_name = parsed.path;
-    } else {
-      transport.path = parsed.path;
-
-      // Add headers only if the Host parameter exists
-      const host = parsed.host;
-      if (host) {
-        transport.headers = { Host: host };
-      }
-    }
+    return;
   }
 
-  return Object.fromEntries(
-    Object.entries({
-      type: "vmess",
-      tag: parsed.ps || `vmess_${getRandomString(10)}`,
-      server: parsed.add,
-      server_port: parseInt(parsed.port, 10),
-      uuid: parsed.id,
-      security: parsed.scy,
-      alter_id: parseInt(parsed.aid, 10),
-      tls,
-      transport,
-    }).filter(([_, v]) => v !== null && v !== undefined),
-  ) as Vmess;
+  if (typeof value === "boolean" || typeof value === "number") {
+    params.set(key, String(value));
+    return;
+  }
+
+  const stringValue = nonEmptyString(value);
+  if (stringValue) {
+    params.set(key, stringValue);
+  }
 }

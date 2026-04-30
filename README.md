@@ -4,7 +4,7 @@
 
 ## Supported Versions
 
-`v2sing` is compatible with `sing-box >=1.11.0`. For best results, use the latest stable release.
+`v2sing` targets current `sing-box` outbound fields and is safest to use with `sing-box >=1.14.0`.
 
 ## Supported Protocols
 
@@ -66,7 +66,7 @@ The build artifacts will be located in the `dist` directory.
 
 *Use `deno task` to explore additional available commands.*
 
-## Changlog
+## Changelog
 
 See the [CHANGELOG.md](CHANGELOG.md) file for more information.
 

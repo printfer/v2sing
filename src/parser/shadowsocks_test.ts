@@ -16,3 +16,22 @@ Deno.test("parseShadowsocks - valid Shadowsocks URL with all parameters", () => 
     password: "password123",
   });
 });
+
+Deno.test("parseShadowsocks - supports SIP002 user info and plugin fields", () => {
+  const credentials = btoa("2022-blake3-chacha20-poly1305:password123");
+  const raw =
+    `ss://${credentials}@example.com:443?plugin=v2ray-plugin%3Bmode%3Dwebsocket%3Bhost%3Dcdn.example.com#PluginTag`;
+
+  const result = parseShadowsocks(raw);
+
+  assertEquals(result, {
+    type: "shadowsocks",
+    tag: "PluginTag",
+    server: "example.com",
+    server_port: 443,
+    method: "2022-blake3-chacha20-poly1305",
+    password: "password123",
+    plugin: "v2ray-plugin",
+    plugin_opts: "mode=websocket;host=cdn.example.com",
+  });
+});
