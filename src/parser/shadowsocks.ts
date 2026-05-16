@@ -39,7 +39,7 @@ export function parseShadowsocks(raw: string): Record<string, unknown> {
     throw new Error("Invalid shadowsocks credentials");
   }
 
-  const serverUrl = new URL(`http://${serverPart}`);
+  const serverUrl = new URL(`ss://${serverPart}`);
   if (!serverUrl.port) {
     throw new Error("Missing port");
   }

@@ -51,6 +51,23 @@ Deno.test("parseShadowsocks - supports legacy full base64 URI", () => {
   });
 });
 
+Deno.test("parseShadowsocks - preserves explicit port 80", () => {
+  const raw = `ss://${
+    btoa("chacha20-ietf-poly1305:password123")
+  }@example.com:80#Port80`;
+
+  const result = parseShadowsocks(raw);
+
+  assertEquals(result, {
+    type: "shadowsocks",
+    tag: "Port80",
+    server: "example.com",
+    server_port: 80,
+    method: "chacha20-ietf-poly1305",
+    password: "password123",
+  });
+});
+
 Deno.test("parseShadowsocks - supports IPv6 URI host", () => {
   const raw = `ss://${btoa("aes-256-gcm:password")}@[2001:db8::4]:8388#IPv6`;
 

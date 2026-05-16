@@ -2,8 +2,9 @@
   "dns": {
     "servers": [
       {
+        "type": "tls",
         "tag": "google",
-        "address": "tls://8.8.8.8"
+        "server": "8.8.8.8"
       }
     ],
     "rules": []
@@ -54,6 +55,7 @@
       },
       {
         "ip_is_private": true,
+        "action": "route",
         "outbound": "direct"
       }
     ],
