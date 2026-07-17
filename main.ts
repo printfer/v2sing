@@ -51,7 +51,10 @@ export default {
           singBoxConfig = getConfig(singBoxSubscription, configTemplate);
         } catch (error) {
           return createJsonResponse(
-            { error: "Error fetching config template", details: error.message },
+            {
+              error: "Error fetching config template",
+              details: error instanceof Error ? error.message : String(error),
+            },
             500,
           );
         }
@@ -80,7 +83,10 @@ export default {
       return createJsonResponse(singBoxConfig);
     } catch (error) {
       return createJsonResponse(
-        { error: "Failed to process subscription", details: error.message },
+        {
+          error: "Failed to process subscription",
+          details: error instanceof Error ? error.message : String(error),
+        },
         500,
       );
     }
@@ -100,7 +106,7 @@ function validateUrl(url: string): void {
  * Fetches a configuration template from the provided URL.
  * @param url - The URL to fetch the configuration template from.
  */
-async function fetchConfigTemplate(url: string): Promise<unknown> {
+async function fetchConfigTemplate(url: string): Promise<JsonResponse> {
   validateUrl(url); // Ensure the config template URL is valid
   const response = await fetch(url);
   if (!response.ok) {
@@ -108,7 +114,21 @@ async function fetchConfigTemplate(url: string): Promise<unknown> {
       `Failed to fetch config template from ${url}: ${response.statusText}`,
     );
   }
-  return response.json();
+  const template: unknown = await response.json();
+  if (!isJsonResponse(template)) {
+    throw new Error("Config template must be a JSON object");
+  }
+  return template;
+}
+
+function isJsonResponse(value: unknown): value is JsonResponse {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const response = value as Record<string, unknown>;
+  return (response.error === undefined || typeof response.error === "string") &&
+    (response.details === undefined || typeof response.details === "string");
 }
 
 /**

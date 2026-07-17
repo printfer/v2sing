@@ -4,7 +4,7 @@
 
 ## Supported Versions
 
-`v2sing` targets current `sing-box` outbound fields and is safest to use with `sing-box >=1.14.0`.
+`v2sing` targets current `sing-box` outbound fields and is safest to use with `sing-box >=1.13.0`.
 
 ## Supported Protocols
 
@@ -78,4 +78,4 @@ This project is licensed under the AGPLv3 License. See the [LICENSE](LICENSE) fi
 
 ## Credits
 
-Copyright © 2024-2025 [Printfer](https://github.com/printfer)
+Copyright © 2024-2026 [Printfer](https://github.com/printfer)

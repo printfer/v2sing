@@ -1,4 +1,4 @@
-# This workflow installs Deno and runs formatting checks, linting, and tests.
+# This workflow installs Deno and runs formatting, linting, type, and test checks.
 # For more information see: https://github.com/denoland/setup-deno
 
 name: "CI - Code Quality & Testing"
@@ -22,10 +22,13 @@ jobs:
           deno-version: v2.x
 
       - name: Run format check
-        run: deno fmt --check src main*
+        run: deno task check:format
 
       - name: Run lint check
-        run: deno lint
+        run: deno task check:lint
+
+      - name: Run type check
+        run: deno task check:types
 
       - name: Run tests
-        run: deno test -A
+        run: deno task check:test

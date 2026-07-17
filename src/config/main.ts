@@ -1,32 +1,40 @@
 import configTemplateDefault from "./template.json" with { type: "json" };
 
 export function getConfig(
-  subscribedOutbounds,
-  configTemplate = configTemplateDefault,
-) {
+  subscribedOutbounds: Record<string, unknown>[],
+  configTemplate: Record<string, unknown> = configTemplateDefault,
+): Record<string, unknown> {
   // Generate replacements for the config template
-  const replacements = {
+  const replacements: Record<string, unknown> = {
     outbounds_tags: subscribedOutbounds.map((outbound) => outbound.tag),
     outbounds: subscribedOutbounds,
   };
-  return replacePlaceholdersInConfig(configTemplate, replacements);
+  return Object.fromEntries(
+    Object.entries(configTemplate).map(([key, value]) => [
+      key,
+      replacePlaceholdersInConfig(value, replacements),
+    ]),
+  );
 }
 
 // Function to recursively replace placeholders in a config template
-function replacePlaceholdersInConfig(template, replacements) {
+function replacePlaceholdersInConfig(
+  template: unknown,
+  replacements: Record<string, unknown>,
+): unknown {
   if (typeof template === "string") {
     // Replace placeholders in strings
     const placeholderMatch = template.match(/^\{\{(.*?)\}\}$/);
     if (placeholderMatch) {
       const key = placeholderMatch[1].trim();
-      if (key in replacements) {
+      if (Object.hasOwn(replacements, key)) {
         return replacements[key]; // Replace with the exact replacement (object, array, or primitive)
       }
     }
     return template.replace(/\{\{(.*?)\}\}/g, (match, key) => {
       const replacementKey = key.trim();
-      return replacementKey in replacements
-        ? replacements[replacementKey]
+      return Object.hasOwn(replacements, replacementKey)
+        ? String(replacements[replacementKey])
         : match;
     });
   } else if (Array.isArray(template)) {

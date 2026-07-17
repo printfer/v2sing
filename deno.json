@@ -7,8 +7,13 @@
       "dependencies": ["build"]
     },
     "format": "deno fmt src main*",
-    "lint": "deno lint",
-    "test": "deno test -A"
+    "check": {
+      "dependencies": ["check:format", "check:lint", "check:types", "check:test"]
+    },
+    "check:format": "deno fmt --check src main*",
+    "check:lint": "deno lint",
+    "check:types": "deno check **/*.ts",
+    "check:test": "deno test -A"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
