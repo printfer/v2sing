@@ -2,10 +2,6 @@
 
 > `v2sing` is a tool designed to seamlessly convert subscription links from the **v2** or **clash** subscription formats to the [**sing-box**](https://sing-box.sagernet.org/) format, ensuring compatibility and simplifying migration.
 
-## Supported Versions
-
-`v2sing` targets current `sing-box` outbound fields and is safest to use with `sing-box >=1.13.0`.
-
 ## Supported Protocols
 
 | Protocol        | Conversion (v2/clash → sing-box) |
@@ -29,11 +25,19 @@ Use the `v2sing` tool by providing specific parameters. Below are the currently 
 - `config` (optional) - The configuration template URL for advanced output customization. See [Creating a Configuration Template](#creating-a-configuration-template) section for more details.
   - Example: `?sub=https://example.com/sub&config=https://example.com/config_template.json`
 
+### Available Templates
+
+Versioned templates are in the [templates directory](./src/config/templates/), with filenames indicating the target sing-box version.
+
+| sing-box version | Status  | Template                                                   |
+|------------------|---------|------------------------------------------------------------|
+| 1.13             | Default | [View template](./src/config/templates/sing-box-1.13.json) |
+
 ### Creating a Configuration Template
 
 You can create a configuration template just like a regular sing-box configuration file, but with placeholders to dynamically insert information from the subscription.
 
-To get started, refer to the sample template provided [here](./src/config/template.json), which you can customize to suit your requirements.
+To create your own template, start with one of the versioned templates, which you can customize to suit your requirements.
 
 Placeholders are written in the format `{{ placeholder_name }}` and are replaced with actual values at runtime.
 

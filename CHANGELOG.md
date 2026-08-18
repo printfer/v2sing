@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added versioned sing-box configuration templates with an explicit default selector and user documentation.
 - Added runtime validation for remote configuration templates.
 - Added Worker and configuration placeholder tests.
 - Added project-wide TypeScript checking to the Deno tasks and CI workflow.

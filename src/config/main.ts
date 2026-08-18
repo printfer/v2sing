@@ -1,4 +1,4 @@
-import configTemplateDefault from "./template.json" with { type: "json" };
+import configTemplateDefault from "./templates/default.ts";
 
 export function getConfig(
   subscribedOutbounds: Record<string, unknown>[],
