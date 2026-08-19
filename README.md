@@ -48,27 +48,15 @@ Here are the currently available placeholders:
 
 ## Development
 
-This project requires [Deno](https://deno.com/) version 2.0 or higher.
-
-### Serving the Project
-
-To start a development server, run:
+Deno 2.0 or later is required.
 
 ```bash
-deno task serve
+deno task serve    # Serve source in watch mode
+deno task check    # Run format, lint, type, and test checks
+deno task build    # Write build artifacts to dist/
+deno task preview  # Build and preview the production bundle
+deno task clean    # Remove generated build artifacts
 ```
-
-### Building the Project
-
-To build the project, run:
-
-```bash
-deno task build
-```
-
-The build artifacts will be located in the `dist` directory.
-
-*Use `deno task` to explore additional available commands.*
 
 ## Changelog
 
